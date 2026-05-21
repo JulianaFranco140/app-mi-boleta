@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Ticket, Search, User, Menu, Bell, ChevronRight, Award } from "lucide-react";
 import styles from "./LotteryHome.module.css";
 
@@ -37,10 +38,12 @@ export default function LotteryHome() {
           <button className={styles.iconButton}>
             <Bell size={20} />
           </button>
-          <button className={styles.profileButton}>
-            <User size={20} />
-            <span className={styles.avatarText}>Iniciar Sesión</span>
-          </button>
+          <Link href="/login" style={{ textDecoration: "none" }}>
+            <button className={styles.profileButton}>
+              <User size={20} />
+              <span className={styles.avatarText}>Iniciar Sesión</span>
+            </button>
+          </Link>
           <button className={styles.mobileMenu}>
             <Menu size={24} />
           </button>
