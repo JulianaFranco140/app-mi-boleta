@@ -1,189 +1,218 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../application/context/AuthContext';
-import { ticketService, Ticket } from '../../infrastructure/services/ticketService';
-import { ShieldAlert, Search, Filter } from 'lucide-react';
+import apiClient from '../../infrastructure/http/apiClient';
+import { Ticket as TicketIcon, LogOut, Search, Filter, ShieldCheck, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
-export default function AdminDashboardPage() {
-  const { user, isLoading, logout } = useAuth();
+interface Ticket {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  authorId: string;
+  createdAt: string;
+  user?: {
+    name: string;
+    email: string;
+  };
+}
+
+export default function AdminPage() {
+  const { user, token, logout, isLoading } = useAuth();
   const router = useRouter();
-  
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loadingTickets, setLoadingTickets] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [typeFilter, setTypeFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('ALL');
 
   useEffect(() => {
     if (!isLoading) {
       if (!user) {
         router.push('/login');
-      } else if (user.role !== 'admin') {
+      } else if (user.role !== 'ADMIN') {
         router.push('/dashboard');
       }
     }
   }, [user, isLoading, router]);
 
   useEffect(() => {
-    if (user?.role === 'admin') {
-      loadAllSystemTickets();
+    if (token && user?.role === 'ADMIN') {
+      fetchTickets();
     }
-  }, [user]);
+  }, [token, user]);
 
-  const loadAllSystemTickets = async () => {
+  const fetchTickets = async () => {
     try {
       setLoadingTickets(true);
-      // Aqui usamos un endpoint admin simulado o el getAll según tu backend.
-      // Puedes adaptar adminService.ts si hay un endpoint específico, 
-      // por ahora reutilizaremos la interface, ajusta si es necesario `/admin/tickets`.
-      const data = await ticketService.getAll(); 
-      setTickets(data);
+      // Admin route fetch...
+      const res = await apiClient.get('/admin/tickets');
+      setTickets(res.data);
     } catch (error) {
-      console.error('Error cargando gestión admin', error);
+      console.error('Error fetching admin tickets', error);
     } finally {
       setLoadingTickets(false);
     }
   };
 
-  if (isLoading || !user) return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Verificando accesos...</div>;
-
-  if (user.role !== 'admin') {
+  if (isLoading || !user || user.role !== 'ADMIN') {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-        <ShieldAlert className="w-16 h-16 text-red-500 mb-4" />
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Acceso Denegado</h2>
-        <p className="text-gray-600 mb-6 font-medium text-center">No tienes los privilegios necesarios para ver esta página.</p>
-        <Link href="/dashboard" className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors">Volver al Dashboard</Link>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
-  // Filtrado local
-  const filteredTickets = tickets.filter(ticket => {
-    const matchesSearch = ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (ticket.gameNumber && ticket.gameNumber.includes(searchTerm));
-    const matchesStatus = statusFilter === 'All' || ticket.status === statusFilter;
-    const matchesType = typeFilter === 'All' || ticket.gameType === typeFilter;
-    
-    return matchesSearch && matchesStatus && matchesType;
+  const getStatusStyle = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'open':
+        return 'bg-neutral-100 text-neutral-800 border border-neutral-200';
+      case 'in_progress':
+        return 'bg-blue-50 text-blue-700 border border-blue-200';
+      case 'closed':
+        return 'bg-green-50 text-green-700 border border-green-200';
+      default:
+        return 'bg-neutral-100 text-neutral-800 border border-neutral-200';
+    }
+  };
+
+  const filteredTickets = tickets.filter((t) => {
+    const matchesSearch = t.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          t.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'ALL' || t.status === statusFilter;
+    return matchesSearch && matchesStatus;
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
-      <header className="bg-slate-900 text-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <ShieldAlert className="w-6 h-6 text-red-400" />
-            <h1 className="font-bold text-xl tracking-tight">Admin - Mi Boleta</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-medium hidden sm:block">Admin: {user.name}</span>
-            <button onClick={logout} className="px-3 py-1.5 bg-slate-800 rounded-lg hover:bg-slate-700 transition-colors text-sm font-medium">
-              Cerrar sesión
-            </button>
+    <div className="min-h-screen bg-neutral-50 font-sans">
+      <nav className="bg-white border-b border-neutral-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <ShieldCheck className="w-6 h-6 text-black mr-2" />
+              <span className="font-semibold text-neutral-900 tracking-tight">Administración Central</span>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Link href="/dashboard" className="text-sm font-medium text-neutral-500 hover:text-black transition-colors flex items-center">
+                 <ArrowLeft className="w-4 h-4 mr-1"/> Volver
+              </Link>
+              <div className="h-4 w-px bg-neutral-200 mx-2"></div>
+              <div className="flex flex-col text-right">
+                <span className="text-sm font-medium text-neutral-900">{user.name}</span>
+                <span className="text-xs text-neutral-500">{user.role}</span>
+              </div>
+            </div>
           </div>
         </div>
-      </header>
+      </nav>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-1">Panel de Control General</h2>
-          <p className="text-gray-500 text-sm">Gestiona todos los sorteos registrados en la plataforma.</p>
+          <h1 className="text-2xl font-bold text-neutral-900 tracking-tight mb-2">Visión General</h1>
+          <p className="text-sm text-neutral-500">Supervisa todos los tickets del sistema.</p>
         </div>
 
-        {/* Filtros */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4 mb-6">
-          <div className="flex-1 relative">
-            <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input 
-              type="text" 
-              placeholder="Buscar por título o número..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div className="flex items-center gap-4">
+        <div className="bg-white shadow-sm border border-neutral-200 rounded-lg overflow-hidden mb-8">
+          <div className="p-4 border-b border-neutral-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="relative flex-1 max-w-md">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-4 w-4 text-neutral-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Buscar tickets..."
+                className="pl-10 w-full px-3 py-2 border border-neutral-200 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-black sm:text-sm transition-colors"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
             <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-gray-400" />
-              <select 
-                title="Status"
+              <Filter className="h-4 w-4 text-neutral-400" />
+              <select
+                className="block w-full pl-3 pr-10 py-2 text-base border border-neutral-200 focus:outline-none focus:ring-1 focus:ring-black focus:border-black sm:text-sm rounded-md bg-white transition-colors"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="py-2 px-3 border border-gray-200 bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-sm text-gray-700"
               >
-                <option value="All">Todos los estados</option>
-                <option value="Pendiente">Pendiente</option>
-                <option value="Ganado">Ganado</option>
-                <option value="Perdido">Perdido</option>
-              </select>
-            </div>
-            <div className="flex items-center gap-2">
-               <select 
-                title="Game Type"
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className="py-2 px-3 border border-gray-200 bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-sm text-gray-700"
-              >
-                <option value="All">Todos los tipos</option>
-                <option value="Lotería">Lotería</option>
-                <option value="Rifa">Rifa</option>
-                <option value="Sorteo">Sorteo</option>
-                <option value="Boleta">Boleta</option>
+                <option value="ALL">Todos los Estados</option>
+                <option value="OPEN">Abiertos</option>
+                <option value="IN_PROGRESS">En Progreso</option>
+                <option value="CLOSED">Cerrados</option>
               </select>
             </div>
           </div>
-        </div>
 
-        {/* Tabla Admin */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm whitespace-nowrap">
-              <thead className="bg-gray-50 text-gray-700">
-                <tr>
-                  <th className="px-6 py-4 font-semibold">ID</th>
-                  <th className="px-6 py-4 font-semibold">Sorteo</th>
-                  <th className="px-6 py-4 font-semibold">Tipo</th>
-                  <th className="px-6 py-4 font-semibold">Número</th>
-                  <th className="px-6 py-4 font-semibold">Estado</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {loadingTickets ? (
+          {loadingTickets ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="w-6 h-6 border-2 border-neutral-300 border-t-black rounded-full animate-spin"></div>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-neutral-200">
+                <thead className="bg-neutral-50/50">
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">Cargando registros...</td>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                      Asunto
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                      Usuario
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                      Estado
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                      Fecha
+                    </th>
+                    <th scope="col" className="relative px-6 py-3">
+                      <span className="sr-only">Acciones</span>
+                    </th>
                   </tr>
-                ) : filteredTickets.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">No se encontraron tickets con estos filtros.</td>
-                  </tr>
-                ) : (
-                  filteredTickets.map(ticket => (
-                    <tr key={ticket.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 font-mono text-xs text-gray-400">{ticket.id?.substring(0, 8)}...</td>
-                      <td className="px-6 py-4 font-medium text-gray-900">{ticket.title}</td>
-                      <td className="px-6 py-4 text-gray-600">{ticket.gameType}</td>
-                      <td className="px-6 py-4 font-mono text-gray-700">{ticket.gameNumber || '-'}</td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                          ${ticket.status === 'Pendiente' ? 'bg-amber-100 text-amber-800' : 
-                            ticket.status === 'Ganado' ? 'bg-green-100 text-green-800' : 
-                            'bg-red-100 text-red-800'}`}
-                        >
-                          {ticket.status}
-                        </span>
+                </thead>
+                <tbody className="bg-white divide-y divide-neutral-100">
+                  {filteredTickets.length > 0 ? (
+                     filteredTickets.map((ticket) => (
+                      <tr key={ticket.id} className="hover:bg-neutral-50/50 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium text-neutral-900">{ticket.title}</span>
+                            <span className="text-xs text-neutral-500 truncate max-w-xs">{ticket.description}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-neutral-900">{ticket.user?.name || 'Desconocido'}</div>
+                          <div className="text-xs text-neutral-500">{ticket.user?.email || 'N/A'}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={px-2.5 py-1 inline-flex text-xs leading-4 font-medium rounded-full }>
+                            {ticket.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
+                          {new Date(ticket.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <Link 
+                            href={/admin/tickets/}
+                            className="text-neutral-400 hover:text-black transition-colors px-3 py-1 border border-neutral-200 rounded-md"
+                          >
+                            Gestionar
+                          </Link>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-12 text-center text-sm text-neutral-500">
+                         No se encontraron tickets con los filtros actuales.
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
-
       </main>
     </div>
   );
