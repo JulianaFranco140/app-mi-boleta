@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { authService, LoginProps, RegisterProps } from '../../infrastructure/services/authService';
 
-interface User {
+export interface User {
   id: string;
   name: string;
   email: string;
@@ -34,42 +34,51 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const storedUser = localStorage.getItem('user');
 
     if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setToken(storedToken);
+        setUser(parsedUser);
+      } catch {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
     }
     setIsLoading(false);
   }, []);
 
+  // Escuchar evento de logout forzado por interceptor 401
+  useEffect(() => {
+    const handleForcedLogout = () => {
+      setToken(null);
+      setUser(null);
+      router.push('/login');
+    };
+    window.addEventListener('auth:logout', handleForcedLogout);
+    return () => window.removeEventListener('auth:logout', handleForcedLogout);
+  }, [router]);
+
   const login = async (data: LoginProps) => {
-    try {
-      const response = await authService.login(data);
-      const { token, user } = response.data;
-      
-      setToken(token);
-      setUser(user);
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      
-      router.push('/dashboard');
-    } catch (error) {
-      throw error;
-    }
+    const response = await authService.login(data);
+    const { token, user } = response.data;
+
+    setToken(token);
+    setUser(user);
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+
+    router.push('/dashboard');
   };
 
   const register = async (data: RegisterProps) => {
-    try {
-      const response = await authService.register(data);
-      const { token, user } = response.data;
-      
-      setToken(token);
-      setUser(user);
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
+    const response = await authService.register(data);
+    const { token, user } = response.data;
 
-      router.push('/dashboard');
-    } catch (error) {
-      throw error;
-    }
+    setToken(token);
+    setUser(user);
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+
+    router.push('/dashboard');
   };
 
   const logout = () => {

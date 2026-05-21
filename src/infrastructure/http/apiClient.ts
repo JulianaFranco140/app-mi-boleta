@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-// URL de producción según las instrucciones
 const BASE_URL = 'https://mi-boleta-api-y9dv.onrender.com/api/v1';
 
 export const apiClient = axios.create({
@@ -15,7 +14,7 @@ apiClient.interceptors.request.use(
   (config) => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`; // Authorization: Bearer <token>
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
@@ -31,7 +30,9 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('token');
-        // Aquí se podría forzar un redirect si se detecta token expirado
+        localStorage.removeItem('user');
+        // Emitir evento para que AuthContext maneje la redirección
+        window.dispatchEvent(new Event('auth:logout'));
       }
     }
     return Promise.reject(error);
