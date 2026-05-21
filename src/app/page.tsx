@@ -1,118 +1,92 @@
 ﻿import Link from 'next/link';
-import { Ticket, ShieldCheck, Clock, SearchX, Frown, CheckCircle } from 'lucide-react';
+import { Ticket } from 'lucide-react';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col font-sans">
-      {/* HEADER */}
-      <header className="w-full bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
-          <div className="flex items-center gap-2 text-blue-700">
-            <Ticket className="w-8 h-8" />
-            <span className="text-xl font-bold tracking-tight">Mi Boleta</span>
+    <div className="min-h-screen bg-white text-neutral-900 font-sans selection:bg-neutral-200">
+      {/* HEADER MINIMALISTA */}
+      <header className="border-b border-neutral-200">
+        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2 font-semibold text-lg tracking-tight">
+            <Ticket className="w-5 h-5" />
+            <span>Mi Boleta</span>
           </div>
-          <div className="flex gap-3">
-            <Link 
-              href="/login" 
-              className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
-            >
+          <nav className="flex items-center gap-4 text-sm font-medium">
+            <Link href="/login" className="text-neutral-600 hover:text-black transition-colors">
               Iniciar Sesión
             </Link>
-            <Link 
-              href="/register" 
-              className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
-            >
+            <Link href="/register" className="bg-black text-white px-4 py-2 rounded-md hover:bg-neutral-800 transition-colors">
               Registrarse
             </Link>
-          </div>
+          </nav>
         </div>
       </header>
 
-      {/* HERO SECTION */}
-      <main className="flex-1">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 text-center">
-          <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 tracking-tight leading-tight mb-6 mt-8">
-            "¿Y si sí me lo gané... <br className="hidden md:block"/> 
-            <span className="text-blue-600">y nunca revisé?</span>"
+      {/* HERO SECTION ESTILO NOTION/VERCEL */}
+      <main className="max-w-5xl mx-auto px-6 py-24 md:py-32">
+        <div className="max-w-3xl">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tighter text-neutral-900 mb-6 leading-tight">
+            "¿Y si sí me lo gané... <br className="text-neutral-400" /> y nunca revisé?"
           </h1>
-          <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-10">
-            Dile adiós a olvidar qué número jugaste, la fecha del sorteo o a perder esa boleta física. Centraliza todas tus rifas, loterías y sorteos en un solo lugar.
+          <p className="text-lg md:text-xl text-neutral-600 mb-10 leading-relaxed max-w-2xl">
+            Un espacio centralizado para registrar, organizar y hacer seguimiento a todas tus rifas, loterías y boletas. 
+            Sin distracciones. Todo bajo control.
           </p>
-
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
-            <Link 
-              href="/register" 
-              className="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white font-bold rounded-lg shadow-md hover:bg-blue-700 hover:shadow-lg transition-all"
-            >
-              Empieza ahora, es gratis
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <Link href="/register" className="w-full sm:w-auto bg-black text-white px-6 py-3 rounded-md font-medium hover:bg-neutral-800 transition-colors text-center">
+              Comenzar ahora
             </Link>
-            <Link 
-              href="/login" 
-              className="w-full sm:w-auto px-8 py-4 bg-white text-blue-700 border border-blue-200 font-bold rounded-lg shadow-sm hover:bg-blue-50 transition-all"
-            >
-              Ya tengo una cuenta
+            <Link href="/login" className="w-full sm:w-auto bg-white text-black border border-neutral-200 px-6 py-3 rounded-md font-medium hover:bg-neutral-50 transition-colors text-center">
+              Ya tengo cuenta
             </Link>
           </div>
         </div>
 
-        {/* EL PROBLEMA VS LA SOLUCION */}
-        <div className="bg-white py-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-              
-              {/* El problema */}
-              <div className="bg-red-50 p-8 rounded-2xl border border-red-100">
-                <div className="flex items-center gap-3 text-red-600 mb-6">
-                  <Frown className="w-8 h-8" />
-                  <h2 className="text-2xl font-bold">La forma antigua</h2>
-                </div>
-                <ul className="space-y-4 text-red-900">
-                  <li className="flex items-start gap-3">
-                    <SearchX className="w-6 h-6 shrink-0 opacity-70" />
-                    <span>Llega la fecha y no sabes dónde dejaste la boleta que compraste en el centro comercial.</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <SearchX className="w-6 h-6 shrink-0 opacity-70" />
-                    <span>Le compraste a un amigo y olvidaste anotar el número.</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <SearchX className="w-6 h-6 shrink-0 opacity-70" />
-                    <span>Soñaste un número, lo jugaste y olvidaste revisar el sorteo.</span>
-                  </li>
-                </ul>
-              </div>
+        {/* COMPARACIÓN MINIMALISTA */}
+        <div className="mt-32 grid md:grid-cols-2 gap-8 border-t border-neutral-200 pt-16">
+          <div className="border border-neutral-200 rounded-xl p-8 bg-neutral-50/50">
+            <h2 className="font-semibold text-lg mb-6">El problema</h2>
+            <ul className="space-y-4 text-neutral-600">
+              <li className="flex gap-3">
+                <span className="text-neutral-400">—</span>
+                Llega la fecha del sorteo y no sabes dónde dejaste la boleta física.
+              </li>
+              <li className="flex gap-3">
+                <span className="text-neutral-400">—</span>
+                Le compraste a un amigo y olvidaste anotar el número.
+              </li>
+              <li className="flex gap-3">
+                <span className="text-neutral-400">—</span>
+                Soñaste un número, lo jugaste y olvidaste consultar los resultados.
+              </li>
+            </ul>
+          </div>
 
-              {/* La solucion */}
-              <div className="bg-blue-50 p-8 rounded-2xl border border-blue-100">
-                <div className="flex items-center gap-3 text-blue-600 mb-6">
-                  <CheckCircle className="w-8 h-8" />
-                  <h2 className="text-2xl font-bold">Con Mi Boleta</h2>
-                </div>
-                <ul className="space-y-4 text-blue-900">
-                  <li className="flex items-start gap-3">
-                    <Ticket className="w-6 h-6 shrink-0 opacity-70" />
-                    <span>Registras la boleta en 10 segundos desde tu celular.</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Clock className="w-6 h-6 shrink-0 opacity-70" />
-                    <span>Tienes siempre a la mano la fecha exacta del sorteo y el número jugado.</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <ShieldCheck className="w-6 h-6 shrink-0 opacity-70" />
-                    <span>Revisas el historial y actualizas si ganaste o perdiste. Todo bajo control.</span>
-                  </li>
-                </ul>
-              </div>
-
-            </div>
+          <div className="border border-neutral-200 rounded-xl p-8 bg-white">
+            <h2 className="font-semibold text-lg mb-6">Con Mi Boleta</h2>
+            <ul className="space-y-4 text-neutral-600">
+              <li className="flex gap-3">
+                <span className="text-black">✓</span>
+                Registro rápido y estructurado en la nube en segundos.
+              </li>
+              <li className="flex gap-3">
+                <span className="text-black">✓</span>
+                Historial completo con las fechas exactas y los números jugados a la mano.
+              </li>
+              <li className="flex gap-3">
+                <span className="text-black">✓</span>
+                Control total sobre tus resultados (ganado, perdido o pendiente).
+              </li>
+            </ul>
           </div>
         </div>
       </main>
 
       {/* FOOTER */}
-      <footer className="bg-gray-900 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400">
-          <p>&copy; 2026 Mi Boleta. Todos los derechos reservados.</p>
+      <footer className="border-t border-neutral-200 py-12 mt-16">
+        <div className="max-w-5xl mx-auto px-6 text-sm text-neutral-500 flex justify-between">
+          <span>&copy; 2026 Mi Boleta. Todos los derechos reservados.</span>
+          <span>Minimalismo y control.</span>
         </div>
       </footer>
     </div>
