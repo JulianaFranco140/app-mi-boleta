@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../../application/context/AuthContext';
-import { Ticket, AlertCircle } from 'lucide-react';
+import { Ticket } from 'lucide-react';
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -22,17 +22,17 @@ export default function RegisterPage() {
     setError('');
 
     if (!name || !email || !password) {
-      setError('Por favor llena todos los campos.');
+      setError('Campos incompletos.');
       return;
     }
 
     if (!validateEmail(email)) {
-      setError('El formato del correo es inválido.');
+      setError('Email inválido.');
       return;
     }
 
     if (password.length < 8) {
-      setError('La contraseña debe tener al menos 8 caracteres.');
+      setError('Mínimo 8 caracteres para contraseña.');
       return;
     }
 
@@ -40,92 +40,86 @@ export default function RegisterPage() {
       setIsLoading(true);
       await register({ name, email, password });
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al registrarte. Verifica tus datos o intenta con otro correo.');
+      setError(err.response?.data?.message || 'Error al registrar.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-        <div className="flex flex-col items-center">
-          <div className="flex items-center gap-2 text-blue-700 mb-2">
-            <Ticket className="w-8 h-8" />
-            <span className="text-2xl font-bold tracking-tight">Mi Boleta</span>
-          </div>
-          <h2 className="text-center text-3xl font-extrabold text-gray-900">
-            Crear Cuenta
+    <div className="min-h-screen flex items-center justify-center bg-white py-12 px-4 sm:px-6 lg:px-8 font-sans">
+      <div className="max-w-sm w-full">
+        <div className="flex flex-col items-center mb-8">
+          <Ticket className="w-8 h-8 mb-4 text-black" />
+          <h2 className="text-2xl font-bold tracking-tight text-neutral-900">
+            Crear tu cuenta
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            ¿Ya tienes cuenta?{' '}
-            <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
-              Inicia sesión aquí
+          <p className="mt-2 text-sm text-neutral-500">
+            Ya tienes cuenta?{' '}
+            <Link href="/login" className="font-medium text-black hover:underline transition-all">
+              Inicia sesión
             </Link>
           </p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-50 text-red-700 p-4 rounded-lg flex items-center gap-3 text-sm">
-              <AlertCircle className="w-5 h-5 shrink-0" />
-              <span>{error}</span>
+            <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md border border-red-100 text-center">
+              {error}
             </div>
           )}
 
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700" htmlFor="name">
-                Nombre Completo
-              </label>
-              <input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="mt-1 appearance-none relative block w-full px-3 py-3 border border-gray-300 rounded-lg placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm transition-colors"
-                placeholder="Juan Pérez"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700" htmlFor="email">
-                Correo Electrónico
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 appearance-none relative block w-full px-3 py-3 border border-gray-300 rounded-lg placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm transition-colors"
-                placeholder="tu@email.com"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700" htmlFor="password">
-                Contraseña
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 appearance-none relative block w-full px-3 py-3 border border-gray-300 rounded-lg placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm transition-colors"
-                placeholder="Mínimo 8 caracteres"
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-1" htmlFor="name">
+              Nombre
+            </label>
+            <input
+              id="name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-3 py-2 border border-neutral-200 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-black sm:text-sm transition-all"
+              placeholder="Tu nombre"
+            />
           </div>
 
           <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-lg text-white ${
-                isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors`}
-            >
-              {isLoading ? 'Registrando...' : 'Comenzar ahora'}
-            </button>
+            <label className="block text-sm font-medium text-neutral-700 mb-1" htmlFor="email">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-3 py-2 border border-neutral-200 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-black sm:text-sm transition-all"
+              placeholder="tu@email.com"
+            />
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-1" htmlFor="password">
+              Contraseña
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-3 py-2 border border-neutral-200 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-black sm:text-sm transition-all"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className={`w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
+              isLoading ? 'bg-neutral-400 cursor-not-allowed' : 'bg-black hover:bg-neutral-800'
+            } transition-all mt-4`}
+          >
+            {isLoading ? 'Registrando...' : 'Continuar con Email'}
+          </button>
         </form>
       </div>
     </div>
