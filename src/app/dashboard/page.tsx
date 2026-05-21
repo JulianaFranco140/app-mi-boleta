@@ -1,16 +1,24 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../application/context/AuthContext';
-import { ticketService, Ticket } from '../../infrastructure/services/ticketService';
-import { Ticket as TicketIcon, Clock, CalendarDays, CheckCircle, LogOut } from 'lucide-react';
+import apiClient from '../../infrastructure/http/apiClient';
+import { Ticket as TicketIcon, LogOut, Plus, Settings, Activity } from 'lucide-react';
 import Link from 'next/link';
 
+interface Ticket {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  authorId: string;
+  createdAt: string;
+}
+
 export default function DashboardPage() {
-  const { user, logout, isLoading } = useAuth();
+  const { user, token, logout, isLoading } = useAuth();
   const router = useRouter();
-  
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loadingTickets, setLoadingTickets] = useState(true);
 
@@ -21,160 +29,165 @@ export default function DashboardPage() {
   }, [user, isLoading, router]);
 
   useEffect(() => {
-    if (user) {
-      loadTickets();
+    if (token) {
+      fetchTickets();
     }
-  }, [user]);
+  }, [token]);
 
-  const loadTickets = async () => {
+  const fetchTickets = async () => {
     try {
       setLoadingTickets(true);
-      const data = await ticketService.getAll();
-      setTickets(data);
+      const res = await apiClient.get('/tickets');
+      setTickets(res.data);
     } catch (error) {
-      console.error('Error cargando los tickets', error);
+      console.error('Error fetching tickets', error);
     } finally {
       setLoadingTickets(false);
     }
   };
 
-  const getMetrics = () => {
-    const total = tickets.length;
-    let pending = 0;
-    let upcoming = 0;
-    
-    const now = new Date();
-    
-    tickets.forEach(t => {
-      if (t.status === 'Pendiente') pending++;
-      const gameDate = new Date(t.gameDate);
-      if (gameDate > now) upcoming++;
-    });
-
-    return { total, pending, upcoming };
+  const handleLogout = () => {
+    logout();
+    router.push('/');
   };
 
-  if (isLoading || !user) return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Cargando perfil...</div>;
+  if (isLoading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white font-sans">
+        <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
-  const metrics = getMetrics();
+  const getStatusStyle = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'open':
+        return 'bg-neutral-100 text-neutral-800 border-neutral-200';
+      case 'in_progress':
+        return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'closed':
+        return 'bg-green-50 text-green-700 border-green-200';
+      default:
+        return 'bg-neutral-100 text-neutral-800 border-neutral-200';
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
-      <header className="bg-blue-700 text-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <TicketIcon className="w-6 h-6 text-blue-200" />
-            <h1 className="font-bold text-xl tracking-tight">Mi Boleta</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-medium hidden sm:block">Hola, {user.name}</span>
-            <button onClick={logout} className="flex items-center gap-2 px-3 py-2 bg-blue-800 rounded-lg hover:bg-blue-900 transition-colors text-sm font-medium">
-              <LogOut className="w-4 h-4" />
-              Salir
-            </button>
+    <div className="min-h-screen bg-neutral-50 font-sans">
+      <nav className="bg-white border-b border-neutral-200 sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <TicketIcon className="w-6 h-6 text-black mr-2" />
+              <span className="font-semibold text-neutral-900 tracking-tight">Mi Boleta</span>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="flex flex-col text-right">
+                <span className="text-sm font-medium text-neutral-900">{user.name}</span>
+                <span className="text-xs text-neutral-500">{user.role}</span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="p-2 text-neutral-500 hover:text-black hover:bg-neutral-100 rounded-md transition-colors"
+                title="Cerrar Sesión"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
-      </header>
+      </nav>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
+      <main className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Resumen y Métricas</h2>
-            <p className="text-gray-500 text-sm">Controla tus sorteos desde aquí.</p>
+            <h1 className="text-2xl font-bold text-neutral-900 tracking-tight">Mis Tickets</h1>
+            <p className="text-sm text-neutral-500 mt-1">Gestiona y da seguimiento a tus solicitudes.</p>
           </div>
-          <Link href="/tickets/new" className="bg-blue-600 text-white px-5 py-2 rounded-lg font-medium shadow-sm hover:bg-blue-700 transition">
-            + Nuevo Registro
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          {/* Card Total */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center gap-5">
-            <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-full flex justify-center items-center shrink-0">
-              <TicketIcon className="w-7 h-7" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Juegos Registrados</p>
-              <p className="text-3xl font-bold text-gray-900">{metrics.total}</p>
-            </div>
-          </div>
-          
-          {/* Card Proximos */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center gap-5">
-            <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-full flex justify-center items-center shrink-0">
-              <CalendarDays className="w-7 h-7" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Próximos Sorteos</p>
-              <p className="text-3xl font-bold text-gray-900">{metrics.upcoming}</p>
-            </div>
-          </div>
-
-          {/* Card Pendientes */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center gap-5">
-            <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-full flex justify-center items-center shrink-0">
-              <Clock className="w-7 h-7" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Juegos Pendientes</p>
-              <p className="text-3xl font-bold text-gray-900">{metrics.pending}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Historial Reciente */}
-        <h3 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">Historial Completo</h3>
-        {loadingTickets ? (
-          <div className="bg-white p-8 rounded-xl text-center shadow-sm border border-gray-100 text-gray-500">
-            Cargando historial...
-          </div>
-        ) : tickets.length === 0 ? (
-          <div className="bg-white p-12 rounded-xl text-center shadow-sm border border-gray-100 flex flex-col items-center">
-            <div className="w-16 h-16 bg-gray-100 text-gray-400 rounded-full flex justify-center items-center mb-4">
-              <TicketIcon className="w-8 h-8" />
-            </div>
-            <p className="text-gray-600 text-lg font-medium mb-1">Aún no tienes registros</p>
-            <p className="text-gray-400 text-sm mb-6">Empieza a llevar el control de tus sorteos añadiendo uno nuevo.</p>
-            <Link href="/tickets/new" className="text-blue-600 font-semibold hover:underline">
-              Ir a registrar juego &rarr;
+          <div className="flex space-x-3">
+            {user.role === 'ADMIN' && (
+              <Link
+                href="/admin"
+                className="inline-flex items-center px-4 py-2 border border-neutral-200 shadow-sm text-sm font-medium rounded-md text-neutral-700 bg-white hover:bg-neutral-50 transition-colors"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Panel Admin
+              </Link>
+            )}
+            <Link
+              href="/dashboard/new"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-black hover:bg-neutral-800 transition-colors shadow-sm"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Nuevo Ticket
             </Link>
           </div>
-        ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        </div>
+
+        <div className="bg-white shadow-sm border border-neutral-200 rounded-lg overflow-hidden">
+          {loadingTickets ? (
+            <div className="flex flex-col items-center justify-center h-64 text-neutral-400">
+               <div className="w-6 h-6 border-2 border-neutral-300 border-t-black rounded-full animate-spin mb-4"></div>
+               <p className="text-sm">Cargando tickets...</p>
+            </div>
+          ) : tickets.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-12 text-center">
+              <div className="w-16 h-16 bg-neutral-50 rounded-full flex items-center justify-center mb-4 border border-neutral-100">
+                <TicketIcon className="w-8 h-8 text-neutral-300" />
+              </div>
+              <h3 className="text-lg font-medium text-neutral-900 max-w-sm">No tienes tickets.</h3>
+              <p className="mt-2 text-sm text-neutral-500 max-w-sm mb-6">
+                Crea tu primer ticket para empezar a gestionar tus solicitudes.
+              </p>
+               <Link
+                href="/dashboard/new"
+                className="inline-flex items-center px-4 py-2 border border-neutral-200 text-sm font-medium rounded-md text-neutral-700 bg-white hover:bg-neutral-50 transition-colors"
+              >
+                Crear Ticket
+              </Link>
+            </div>
+          ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm whitespace-nowrap">
-                <thead className="bg-gray-50 text-gray-700">
+              <table className="min-w-full divide-y divide-neutral-200">
+                <thead className="bg-neutral-50/50">
                   <tr>
-                    <th className="px-6 py-4 font-semibold">Sorteo</th>
-                    <th className="px-6 py-4 font-semibold">Tipo</th>
-                    <th className="px-6 py-4 font-semibold">Número</th>
-                    <th className="px-6 py-4 font-semibold">Fecha Sorteo</th>
-                    <th className="px-6 py-4 font-semibold">Estado</th>
-                    <th className="px-6 py-4 font-semibold text-right">Acciones</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                      Asunto
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                      Estado
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                      Fecha
+                    </th>
+                    <th scope="col" className="relative px-6 py-3">
+                      <span className="sr-only">Acciones</span>
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {tickets.map(ticket => (
-                    <tr key={ticket.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 font-medium text-gray-900">{ticket.title}</td>
-                      <td className="px-6 py-4 text-gray-600">{ticket.gameType}</td>
-                      <td className="px-6 py-4 font-mono text-gray-700">{ticket.gameNumber || '-'}</td>
-                      <td className="px-6 py-4 text-gray-600">
-                        {new Date(ticket.gameDate).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' })}
+                <tbody className="bg-white divide-y divide-neutral-100">
+                  {tickets.map((ticket) => (
+                    <tr key={ticket.id} className="hover:bg-neutral-50/50 transition-colors group">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-neutral-900">{ticket.title}</span>
+                          <span className="text-xs text-neutral-500 truncate max-w-xs">{ticket.description}</span>
+                        </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                          ${ticket.status === 'Pendiente' ? 'bg-amber-100 text-amber-800' : 
-                            ticket.status === 'Ganado' ? 'bg-green-100 text-green-800' : 
-                            'bg-red-100 text-red-800'}`}
-                        >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2.5 py-1 inline-flex text-xs leading-4 font-medium rounded-full border ${getStatusStyle(ticket.status)}`}>
                           {ticket.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right">
-                        <Link href={`/tickets/${ticket.id}`} className="text-blue-600 hover:underline font-medium text-sm">
-                          Ver / Editar
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
+                        {new Date(ticket.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <Link 
+                          href={`/dashboard/${ticket.id}`}
+                          className="text-neutral-400 hover:text-black transition-colors"
+                        >
+                          Ver detalles
                         </Link>
                       </td>
                     </tr>
@@ -182,9 +195,8 @@ export default function DashboardPage() {
                 </tbody>
               </table>
             </div>
-          </div>
-        )}
-
+          )}
+        </div>
       </main>
     </div>
   );
